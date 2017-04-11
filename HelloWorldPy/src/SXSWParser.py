@@ -14,18 +14,22 @@ def hello(myInput):
 def parseLink(web_url):
     print "\nParsing "  + web_url.geturl()
     soup = BeautifulSoup(web_url.read(), "html.parser")
-    tag = soup.find(text="Public Film Contact").parent.parent
-    print("\n---PUBLIC FILM CONTACT---\n")
-    for sibling in tag.findAll(text=True):
-        print(sibling.string)
+    tag = soup.find(text="Public Film Contact")
+    if tag is not None and tag.parent is not None:
+        pTag = tag.parent.parent
+        print("\n---PUBLIC FILM CONTACT---\n")
+        for sibling in pTag.findAll(text=True):
+            print(sibling.string)
 
 #    for sibling in tag.next_siblings:
 #        print(sibling.string)
-    tag = soup.find(text="Publicity Contact").parent.parent
-    print("\n----PUBLICITY CONTACT---\n")
-    for sibling in tag.findAll(text=True):
-        print(sibling.string)
-        
+    tag = soup.find(text="Publicity Contact")
+    if tag is not None and tag.parent is not None:
+        pTag = tag.parent.parent
+        print("\n---PUBLICITY CONTACT---\n")
+        for sibling in pTag.findAll(text=True):
+            print(sibling.string)
+      
     
 #myInput = raw_input("Please enter name:")
 #print(hello(myInput))
