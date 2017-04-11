@@ -5,11 +5,19 @@ Created on Apr 10, 2017
 '''
 import urllib2
 import unicodedata
+import smtplib
 import re
 import json
+import mailer
+import getpass
+import pymsgbox
+
+
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from operator import itemgetter
+from mailer import Mailer
+from mailer import Message
 
 films = defaultdict(dict)
 
@@ -57,25 +65,25 @@ def parseLink(web_url):
     if tag is not None and tag.parent is not None:
         pTag = tag.parent.parent
         
-        print("\n---PUBLIC FILM CONTACT---")
+        #print("\n---PUBLIC FILM CONTACT---")
         #Skip "Public Film Contact" Title
         pTag = pTag.find_next(text=True)
         if pTag:
             pfName = pTag.find_next(text=True).strip()
             info['pfName'] = pfName 
-            print("Name  : " + pfName)
+            #print("Name  : " + pfName)
         pTag = pTag.find_next(text=re.compile("@"))
         if pTag: 
             pfMail = pTag.string.strip()
             info['pfMail'] = pfMail
-            print("Email : " + pfMail)
+            #print("Email : " + pfMail)
         pTag = pTag.find_next(text=re.compile("[0-9]"))
         if pTag:
             pfNum = pTag.string.strip() 
             info['pfNum'] = pfNum
-            print("Number: " + pfNum)
+            #print("Number: " + pfNum)
         
-        print("---END----")
+        #print("---END----")
  
 #    for sibling in tag.next_siblings:
 #        print(sibling.string)
@@ -83,30 +91,67 @@ def parseLink(web_url):
     if tag is not None and tag.parent is not None:
         pTag = tag.parent.parent
         
-        print("\n---PUBLICITY CONTACT---")
+        #print("\n---PUBLICITY CONTACT---")
         pTag = pTag.find_next(text=True)
         if pTag:
             pName = pTag.find_next(text=True).strip()
             info['pName'] = pName 
-            print("Name  : " + pName)
+            #print("Name  : " + pName)
         pTag = pTag.find_next(text=re.compile("@"))
         if pTag: 
             pMail = pTag.string.strip()
             info['pMail'] = pMail
-            print("Email : " + pMail)
+            #print("Email : " + pMail)
         pTag = pTag.find_next(text=re.compile("[0-9]"))
         if pTag:
             pNum = pTag.string.strip() 
             info['pNum'] = pNum
-            print("Number: " + pNum)
+            #print("Number: " + pNum)
         
-        print("---END----")
+        #print("---END----")
         films[title.strip()] = info
-        print("info Dict: ")
-        printDict(info)
-        print(json.dumps(films, indent=4))
+        print("Info: ")
+        #printDict(info)
+        #print(json.dumps(films, indent=4))
+        sendEmail()
      
+def sendEmail():  
+    testFilm = defaultdict(dict)
+    test = {}
+    test['pfName'] = "Ut"
+    test['pfMail'] = "th"
+    test['pName'] = "S"
+    test['pMail'] = "sam"
+    testFilm["The Untold Adventures of Sambu and Chellam"] = test
+    print(json.dumps(testFilm, indent=4)) 
     
+    print("Email TEST:")
+    mFrom = pymsgbox.prompt("From Address:")
+    mTo     = pymsgbox.prompt("To Address:")
+    mSub = pymsgbox.prompt("Subject")
+    mMsg = pymsgbox.prompt("MSG:")
+    mUsr = pymsgbox.prompt("Enter Gmail User Name:")
+    mPwd = pymsgbox.password("Enter your password:")
+    mMail = " From: " + mFrom + " To: " + mTo + " Sub: " + mSub + " Msg: " + mMsg
+    
+    message = Message(From=mFrom, To=mTo)
+    message.Subject = mSub
+    message.Html = mMsg
+    
+    #Turn on Low Security App Usage in Gmail for the following to work
+    
+    sender=Mailer('smtp.gmail.com', use_tls=True, usr=mUsr, pwd=mPwd)
+    print("Message To Be Sent: " + mMsg)
+    pymsgbox.alert(mMail, "Message to be sent")
+    mConfirm = pymsgbox.confirm(" Ready to Send?", "Confirm Send", ["Yes", "No"])
+    
+    if(mConfirm == "Yes"): 
+        sender.send(message)
+        pymsgbox.alert("\nMessage Sent\n")
+        
+    
+    
+      
 #myInput = raw_input("Please enter name:")
 #print(hello(myInput))
 
@@ -119,7 +164,7 @@ except urllib2.URLError :
     print("URLERROR!")
         
 #print(soup.prettify())
-#Traverse site and get all music links
+#Traverse site and get all music links - test with films/65916
 L = []
 for link in soup.find_all('a', href=re.compile("films\/65916")):
     dir_link = "http://schedule.sxsw.com" + link.get('href')
