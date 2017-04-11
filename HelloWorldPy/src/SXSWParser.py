@@ -26,7 +26,11 @@ def findText(pText,soup):
 def parseLink(web_url):
     print "\nParsing "  + web_url.geturl()
     soup = BeautifulSoup(web_url.read(), "html.parser")
-    
+    #Get Film Name
+    tag = soup.find('h1', class_="event-name")
+    print("FILM: " + tag.string)
+    findText("Credits", soup)
+    #Get Contact Info
     tag = soup.find(text="Public Film Contact")
     if tag is not None and tag.parent is not None:
         pTag = tag.parent.parent
