@@ -19,8 +19,15 @@ from collections import defaultdict
 from operator import itemgetter
 from mailer import Mailer
 from mailer import Message
+from ctypes.wintypes import BOOLEAN
+from test._mock_backport import sentinel
 
+#Contains All the contact info, scrubbed from the SXSW Links
 films = defaultdict(dict)
+#Login only once
+loggedIn = False
+mUsr = ""
+mPwd = ""
 
 def hello(myInput):
     return "Hello World: " + myInput
@@ -122,18 +129,19 @@ def prepEmail():
     test['pfMail'] = "thrkvit@gmail.com"
     test['pName'] = "Madrazi"
     test['pMail'] = "madrazimusic@gmail.com"
-    testFilm["Avatar 3.0 - a Sneak peek from its creators"] = test
+    testFilm["How Sambu met the cutest girl in the world"] = test
     #QQ: Not sure why this is neccessary. Otherwise test doesn't change
     test = {}
     test['pName'] = "Sambu"
     test['pMail'] = "sambasevam@gmail.com"
-    testFilm["How Sambu met the cutest girl in the world"] = test
+    testFilm["Avatar 3.0 - The Tamil (Original) Version"] = test
 #    print "Number of Films: %d" % len(testFilm)
 #    print(json.dumps(testFilm, indent=4)) 
 
 #   Template resides in the same folder as the py script    
     templateMail = open("SXSW Python Email Template.txt", "r")
     txt = templateMail.read()
+    #print txt
     templateMail.close()
     
     for k in testFilm.keys():
@@ -157,22 +165,30 @@ def prepEmail():
             mTo = test['pMail']
         elif 'pfMail' in test.keys():
             mTo = test['pfMail']
-        print(json.dumps(test, indent=4))
         print "\nTo: " + mTo + "\nSubject: " + mSubject + "\nMessage: \n" + mMsg 
-        sendEmail(mTo, mSubject, mMsg)
+        sent = sendEmail(mTo, mSubject, mMsg)
+        test['sent'] = sent
+        testFilm[k] = test
+        print(json.dumps(test, indent=4))
+        
             
         
      
 def sendEmail(mTo, mSubject, mMsg):  
     
-    print("Email TEST:")
-    mUsr = pymsgbox.prompt("From Address/Gmail user Name:")
-    mPwd = pymsgbox.password("Enter your password:")
-    mMail = "From: " + mUsr + "\nTo: " + mTo + "\nSub: " + mSubject + "\nMsg: \n" + mMsg
+    global loggedIn
+    global mUsr
+    global mPwd
+    if loggedIn==False:
+        mUsr = pymsgbox.prompt("From Address/Gmail user Name:")
+        mPwd = pymsgbox.password("Enter your password:")
+        loggedIn = True
+        
+    mMail = "From: " + mUsr + "\n\nTo: " + mTo + "\n\nSub: " + mSubject + "\n\nMsg: \n" + mMsg
     
-    message = Message(From=mUsr, To=mTo.split(","))
-    message.Subject = mSubject
-    message.Html = mMsg
+    message = Message(From=mUsr, To=mTo.split(","), Subject=mSubject, Body=mMsg)
+    #message.Subject = mSubject
+    #message.Html = mMsg
     
     #Turn on Low Security App Usage in Gmail for the following to work
     
@@ -181,10 +197,16 @@ def sendEmail(mTo, mSubject, mMsg):
     mConfirm = pymsgbox.confirm(" Ready to Send?", "Confirm Send", ["Yes", "No"])
     
     if(mConfirm == "Yes"): 
-        sender.send(message)
-        pymsgbox.alert("\nMessage Sent\n")
-        
+        try:
+            sender.send(message)
+            pymsgbox.alert("\nMessage Sent\n")
+            return True
+        except:
+            pymsgbox.alert("\nMessage Failed to Send.")
+    else:
+        pass    
     
+    return False
     
       
 #myInput = raw_input("Please enter name:")
