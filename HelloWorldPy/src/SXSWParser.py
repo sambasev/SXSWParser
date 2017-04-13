@@ -12,6 +12,7 @@ import mailer
 import getpass
 import pymsgbox
 import string
+import pickle
 
 
 from bs4 import BeautifulSoup
@@ -123,18 +124,23 @@ def parseLink(web_url):
         prepEmail()
 
 def prepEmail():
-    testFilm = defaultdict(dict)
-    test = {}
-    test['pfName'] = "Uthara KV"
-    test['pfMail'] = "thrkvit@gmail.com"
-    test['pName'] = "Madrazi"
-    test['pMail'] = "madrazimusic@gmail.com"
-    testFilm["How Sambu met the cutest girl in the world"] = test
-    #QQ: Not sure why this is neccessary. Otherwise test doesn't change
-    test = {}
-    test['pName'] = "Sambu"
-    test['pMail'] = "sambasevam@gmail.com"
-    testFilm["Avatar 3.0 - The Tamil (Original) Version"] = test
+    try:
+        with open("save.p", "rb") as f:
+            testFilm = pickle.load(f)
+    except:
+        testFilm = defaultdict(dict)
+    
+        test = {}
+        test['pfName'] = "Uthara KV"
+        test['pfMail'] = "thrkvit@gmail.com"
+        test['pName'] = "Madrazi"
+        test['pMail'] = "madrazimusic@gmail.com"
+        testFilm["How Sambu met the cutest girl in the world"] = test
+        #QQ: Not sure why this is neccessary. Otherwise test doesn't change
+        test = {}
+        test['pName'] = "Sambu"
+        test['pMail'] = "sambasevam@gmail.com"
+        testFilm["Avatar 3.0 - The Tamil (Original) Version"] = test
 #    print "Number of Films: %d" % len(testFilm)
 #    print(json.dumps(testFilm, indent=4)) 
 
@@ -165,13 +171,16 @@ def prepEmail():
             mTo = test['pMail']
         elif 'pfMail' in test.keys():
             mTo = test['pfMail']
-        print "\nTo: " + mTo + "\nSubject: " + mSubject + "\nMessage: \n" + mMsg 
-        sent = sendEmail(mTo, mSubject, mMsg)
-        test['sent'] = sent
-        testFilm[k] = test
-        print(json.dumps(test, indent=4))
-        
+        #print "\nTo: " + mTo + "\nSubject: " + mSubject + "\nMessage: \n" + mMsg
+        sentKey = test.get('sent') 
+        if sentKey is None or sentKey==False:
+            test['sent'] = sendEmail(mTo, mSubject, mMsg)
+            testFilm[k] = test
             
+        print(json.dumps(test, indent=4))
+    
+    with open("save.p", "wb") as f:    
+        pickle.dump(testFilm, f)        
         
      
 def sendEmail(mTo, mSubject, mMsg):  
