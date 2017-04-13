@@ -11,6 +11,7 @@ import json
 import mailer
 import getpass
 import pymsgbox
+import string
 
 
 from bs4 import BeautifulSoup
@@ -110,38 +111,72 @@ def parseLink(web_url):
         
         #print("---END----")
         films[title.strip()] = info
-        print("Info: ")
-        #printDict(info)
+        #print "Number of Films: %d"  % len(films)
         #print(json.dumps(films, indent=4))
-        sendEmail()
-     
-def sendEmail():  
+        prepEmail()
+
+def prepEmail():
     testFilm = defaultdict(dict)
     test = {}
-    test['pfName'] = "Ut"
-    test['pfMail'] = "th"
-    test['pName'] = "S"
-    test['pMail'] = "sam"
-    testFilm["The Untold Adventures of Sambu and Chellam"] = test
-    print(json.dumps(testFilm, indent=4)) 
+    test['pfName'] = "Uthara KV"
+    test['pfMail'] = "thrkvit@gmail.com"
+    test['pName'] = "Madrazi"
+    test['pMail'] = "madrazimusic@gmail.com"
+    testFilm["Avatar 3.0 - a Sneak peek from its creators"] = test
+    #QQ: Not sure why this is neccessary. Otherwise test doesn't change
+    test = {}
+    test['pName'] = "Sambu"
+    test['pMail'] = "sambasevam@gmail.com"
+    testFilm["How Sambu met the cutest girl in the world"] = test
+#    print "Number of Films: %d" % len(testFilm)
+#    print(json.dumps(testFilm, indent=4)) 
+
+#   Template resides in the same folder as the py script    
+    templateMail = open("SXSW Python Email Template.txt", "r")
+    txt = templateMail.read()
+    templateMail.close()
+    
+    for k in testFilm.keys():
+        test = testFilm[k]
+        mSubject = k.strip()
+        mMsg = txt
+        mTo = ""
+        if 'pName' and 'pfName' in test.keys():
+            mMsg = mMsg.replace("Name1", test['pName'].strip())
+            mMsg = mMsg.replace("Name2", test['pfName'].strip())
+        elif 'pName' in test.keys():
+            mMsg = mMsg.replace("Name1", test['pName'].strip())
+            mMsg = mMsg.replace("/Name2", "")
+        elif 'pfName' in test.keys():
+            mMsg = mMsg.replace("Name1", "")
+            mMsg = mMsg.replace("/Name2", test['pfName'].strip())
+        
+        if 'pMail' and 'pfMail' in test.keys():
+            mTo = test['pMail'] + "," + test['pfMail']
+        elif 'pMail' in test.keys():
+            mTo = test['pMail']
+        elif 'pfMail' in test.keys():
+            mTo = test['pfMail']
+        print(json.dumps(test, indent=4))
+        print "\nTo: " + mTo + "\nSubject: " + mSubject + "\nMessage: \n" + mMsg 
+        sendEmail(mTo, mSubject, mMsg)
+            
+        
+     
+def sendEmail(mTo, mSubject, mMsg):  
     
     print("Email TEST:")
-    mFrom = pymsgbox.prompt("From Address:")
-    mTo     = pymsgbox.prompt("To Address:")
-    mSub = pymsgbox.prompt("Subject")
-    mMsg = pymsgbox.prompt("MSG:")
-    mUsr = pymsgbox.prompt("Enter Gmail User Name:")
+    mUsr = pymsgbox.prompt("From Address/Gmail user Name:")
     mPwd = pymsgbox.password("Enter your password:")
-    mMail = " From: " + mFrom + " To: " + mTo + " Sub: " + mSub + " Msg: " + mMsg
+    mMail = "From: " + mUsr + "\nTo: " + mTo + "\nSub: " + mSubject + "\nMsg: \n" + mMsg
     
-    message = Message(From=mFrom, To=mTo)
-    message.Subject = mSub
+    message = Message(From=mUsr, To=mTo.split(","))
+    message.Subject = mSubject
     message.Html = mMsg
     
     #Turn on Low Security App Usage in Gmail for the following to work
     
     sender=Mailer('smtp.gmail.com', use_tls=True, usr=mUsr, pwd=mPwd)
-    print("Message To Be Sent: " + mMsg)
     pymsgbox.alert(mMail, "Message to be sent")
     mConfirm = pymsgbox.confirm(" Ready to Send?", "Confirm Send", ["Yes", "No"])
     
@@ -175,7 +210,8 @@ for link in soup.find_all('a', href=re.compile("films\/65916")):
 for item in L:
     try :
         web_url = urllib2.urlopen(item)
-        parseLink(web_url)
+        #parseLink(web_url)
+        prepEmail()
     except urllib2.HTTPError :
         print("HTTPERROR!!")
     except urllib2.URLError :
